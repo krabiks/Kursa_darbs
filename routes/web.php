@@ -13,7 +13,7 @@ use App\Http\Controllers\EquipmentSummaryController;
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login'); // Pāradresē uz login
 });
 
 /*
@@ -43,20 +43,22 @@ Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Tehnikas kopsavilkuma skats
+    | Ieraksti - pieejami visiem lietotājiem
     |--------------------------------------------------------------------------
     */
-    Route::get('/summary', [EquipmentSummaryController::class, 'index'])->name('summary.index');
+    Route::resource('records', RecordsController::class);
 });
 
 /*
 |--------------------------------------------------------------------------
-| Resursu maršruti
+| Admin maršruti - pieejami tikai administratoriem
 |--------------------------------------------------------------------------
 */
-Route::resource('employees', EmployeesController::class);
-Route::resource('machines', MachinesController::class);
-Route::resource('records', RecordsController::class);
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::resource('employees', EmployeesController::class);
+    Route::resource('machines', MachinesController::class);
+    Route::get('/summary', [EquipmentSummaryController::class, 'index'])->name('summary.index');
+});
 
 /*
 |--------------------------------------------------------------------------
