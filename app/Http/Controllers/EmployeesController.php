@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class EmployeesController extends Controller
 {
@@ -22,40 +24,29 @@ class EmployeesController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:employees,email|unique:users,email',
             'position' => 'required|string|max:255',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|in:user,admin',
         ]);
 
-        Employee::create($validated);
-
-        return redirect()->route('employees.index')->with('success', 'Employee added successfully!');
-    }
-
-    public function show(Employee $employee)
-    {
-        return view('employees.show', compact('employee'));
-    }
-
-    public function edit(Employee $employee)
-    {
-        return view('employees.edit', compact('employee'));
-    }
-
-    public function update(Request $request, Employee $employee)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
+        // Izveido darbinieku
+        $employee = Employee::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'position' => $validated['position'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
         ]);
 
-        $employee->update($validated);
+        // Izveido lietotāju
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
+        ]);
 
-        return redirect()->route('employees.index')->with('success', 'Employee updated successfully!');
-    }
-
-    public function destroy(Employee $employee)
-    {
-        $employee->delete();
-
-        return redirect()->route('employees.index')->with('success', 'Employee deleted successfully!');
+        return redirect()->route('employees.index')->with('success', 'Darbinieks un lietotājs veiksmīgi izveidots!');
     }
 }
